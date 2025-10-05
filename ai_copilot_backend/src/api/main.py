@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 from src.api.schemas import ChatRequest, ChatResponse
 from src.api.gemini_client import generate_reply
@@ -72,6 +73,11 @@ app.add_middleware(
 )
 def index():
     """Index route to quickly verify the backend is reachable."""
+    try:
+        print("[AI Copilot Backend] GET / - served index")
+    except Exception:
+        # Avoid raising due to logging errors
+        pass
     return JSONResponse(
         {
             "service": "AI Copilot Backend",
@@ -98,6 +104,10 @@ def index():
 )
 def health_check():
     """Health check endpoint."""
+    try:
+        print("[AI Copilot Backend] GET /health - ok")
+    except Exception:
+        pass
     return {"status": "ok"}
 
 
@@ -119,8 +129,16 @@ def health_check():
 )
 async def chat(request: ChatRequest) -> ChatResponse:
     """Handle chat requests by sending the message and optional history to Gemini."""
+    # Log minimal request context for troubleshooting
+    try:
+        hist_len = len(request.history or [])
+        print(f"[AI Copilot Backend] POST /chat - message length={len(request.message or '')}, history={hist_len}, model={GEMINI_MODEL}")
+    except Exception:
+        pass
+
     # Validate configuration
     if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
+        print("[AI Copilot Backend] /chat error - GEMINI_API_KEY missing")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Server not configured: GEMINI_API_KEY is missing.",
@@ -136,10 +154,29 @@ async def chat(request: ChatRequest) -> ChatResponse:
         return ChatResponse(reply=reply_text)
     except ValueError as ve:
         # Input or parsing related errors
+        print(f"[AI Copilot Backend] /chat ValueError: {ve}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve)) from ve
     except Exception as exc:
         # Unexpected errors
+        print("[AI Copilot Backend] /chat unexpected error:\n" + "".join(traceback.format_exc()))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate reply from Gemini.",
         ) from exc
+
+# PUBLIC_INTERFACE
+@app.post(
+    "/api/chat",
+    tags=["chat"],
+    summary="Chat with Gemini (alias)",
+    description="Alias endpoint for /chat to avoid path prefix mismatches.",
+    response_model=ChatResponse,
+    responses={
+        200: {"description": "Successful Response"},
+        400: {"description": "Invalid request or configuration"},
+        500: {"description": "Unexpected server error"},
+    },
+)
+async def chat_alias(request: ChatRequest) -> ChatResponse:
+    """Alias endpoint that forwards to /chat handler."""
+    return await chat(request)
