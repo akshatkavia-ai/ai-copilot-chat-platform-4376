@@ -3,6 +3,7 @@ from typing import List
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.schemas import ChatRequest, ChatResponse
@@ -42,6 +43,16 @@ app = FastAPI(
     ],
 )
 
+@app.on_event("startup")
+async def _on_startup():
+    # Helpful diagnostic logging; prints to uvicorn logs on boot
+    print(
+        "[AI Copilot Backend] Startup complete. Expected to be served by uvicorn on 0.0.0.0:3001. "
+        f"Allowed origins: {allowed_origins or '[]'}. "
+        f"Model: {GEMINI_MODEL or 'unset'}. "
+        f"API key configured: {'yes' if (GEMINI_API_KEY and GEMINI_API_KEY.strip()) else 'no'}"
+    )
+
 # Configure CORS using ALLOWED_ORIGINS
 app.add_middleware(
     CORSMiddleware,
@@ -50,6 +61,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# PUBLIC_INTERFACE
+@app.get(
+    "/",
+    tags=["health"],
+    summary="Service Index",
+    description="Basic info and readiness links for the AI Copilot Backend.",
+    responses={200: {"description": "Service info"}},
+)
+def index():
+    """Index route to quickly verify the backend is reachable."""
+    return JSONResponse(
+        {
+            "service": "AI Copilot Backend",
+            "status": "running",
+            "docs": "/docs",
+            "health": "/health",
+            "chat": "/chat",
+        }
+    )
 
 
 # PUBLIC_INTERFACE

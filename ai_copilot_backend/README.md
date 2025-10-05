@@ -29,6 +29,8 @@ FastAPI backend that exposes chat and health endpoints, integrating with Google'
 4) Explore API
    - OpenAPI docs: http://localhost:3001/docs
    - OpenAPI JSON: http://localhost:3001/openapi.json
+   - Health: curl http://127.0.0.1:3001/health
+   - Index: curl http://127.0.0.1:3001/
 
 ## Endpoints
 
@@ -59,3 +61,16 @@ It writes the latest schema to interfaces/openapi.json. Ensure the app imports s
 - See **CONFIGURATION_STATUS.md** for current setup status and verification steps
 - See **DEPLOYMENT_NOTES.md** for detailed deployment instructions and troubleshooting guide
 - Use **start_server.sh** for quick server startup with correct configuration
+
+### Quick Verification
+- Check server listening: lsof -i :3001
+- Probe health: curl http://127.0.0.1:3001/health  -> {"status":"ok"}
+- Probe index: curl http://127.0.0.1:3001/         -> service info JSON
+- Open docs: http://localhost:3001/docs
+
+### Frontend Axios Base URL guidance
+- Ensure REACT_APP_API_BASE_URL (or equivalent) is set to http://127.0.0.1:3001 (or http://localhost:3001)
+- When building request paths, avoid double slashes:
+  - Prefer axios.post(`${baseURL}/chat`, ...) only if baseURL has no trailing slash
+  - Or keep baseURL with trailing slash and use axios.post('chat', ...) via an axios instance
+- Do not prefix backend path with the frontend origin or dev proxy unless intentionally configured.
