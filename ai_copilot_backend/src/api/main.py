@@ -14,14 +14,16 @@ load_dotenv()
 # Environment variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-ALLOWED_ORIGINS_RAW = os.getenv("ALLOWED_ORIGINS", "*")
+# Prefer explicit dev origins by default to avoid wildcard + credentials pitfalls
+ALLOWED_ORIGINS_RAW = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000"
+)
 
-# Build allowed origins list from CSV value; default "*" for permissive CORS
-allowed_origins: List[str]
-if ALLOWED_ORIGINS_RAW.strip() == "*" or ALLOWED_ORIGINS_RAW.strip() == "":
-    allowed_origins = ["*"]
-else:
-    allowed_origins = [o.strip() for o in ALLOWED_ORIGINS_RAW.split(",") if o.strip()]
+# Build allowed origins list from CSV value
+allowed_origins: List[str] = [
+    o.strip() for o in (ALLOWED_ORIGINS_RAW or "").split(",") if o.strip()
+]
 
 # Create FastAPI app with metadata and tags for OpenAPI
 app = FastAPI(
