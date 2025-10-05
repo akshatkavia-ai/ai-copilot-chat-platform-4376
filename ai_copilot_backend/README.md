@@ -22,7 +22,9 @@ FastAPI backend that exposes chat and health endpoints, integrating with Google'
    - ALLOWED_ORIGINS can be a comma-separated list or "*" for permissive CORS.
 
 3) Run the server (port 3001)
-   - uvicorn src.api.main:app --host 0.0.0.0 --port 3001 --reload
+   - Quick start: ./start_server.sh
+   - Or manually: uvicorn src.api.main:app --host 0.0.0.0 --port 3001 --reload
+   - Important: Always use --host 0.0.0.0 to accept external connections
 
 4) Explore API
    - OpenAPI docs: http://localhost:3001/docs
@@ -51,3 +53,9 @@ This repository includes a small script to regenerate the OpenAPI spec file for 
 - python -m src.api.generate_openapi
 
 It writes the latest schema to interfaces/openapi.json. Ensure the app imports succeed (env variables can remain unset for schema generation).
+
+## Configuration & Troubleshooting
+
+- See **CONFIGURATION_STATUS.md** for current setup status and verification steps
+- See **DEPLOYMENT_NOTES.md** for detailed deployment instructions and troubleshooting guide
+- Use **start_server.sh** for quick server startup with correct configuration
